@@ -63,9 +63,11 @@ class Article(Base):
     def __unicode__(self):
         return u"%s" % (self.title)
 
-    @app_models.permalink
+    #@app_models.permalink #can't get reverse on this
+    @models.permalink
     def get_absolute_url(self):
-        return ('article_detail', 'articles.urls', (), {'slug': self.slug})
+        #return ('article_detail', 'articles.urls', (), {'slug': self.slug})
+        return ('article_detail', (), {'slug': self.slug})
 
     @property
     def is_active(self):
