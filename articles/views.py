@@ -25,4 +25,4 @@ class ArticleList(AppContentMixin, ListView):
     model = Article
 
     def get_queryset(self):
-        return Article.objects.active()
+        return Article.objects.active().order_by('-creation_date')
