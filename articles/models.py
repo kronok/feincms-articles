@@ -13,6 +13,7 @@ except ImportError:
 from feincms.content.application import models as app_models
 from feincms.models import Base
 from feincms.utils.managers import ActiveAwareContentManagerMixin
+from juicerecipes import settings
 
 
 class ArticleManager(ActiveAwareContentManagerMixin, models.Manager):
@@ -24,6 +25,7 @@ class Article(Base):
 
     title = models.CharField(_('title'), max_length=255)
     slug = models.SlugField(_('slug'), max_length=255, help_text=_('This will be automatically generated from the name'), unique=True, editable=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL)
 
     class Meta:
         ordering = ['title']
@@ -63,7 +65,7 @@ class Article(Base):
     def __unicode__(self):
         return u"%s" % (self.title)
 
-    #@app_models.permalink #can't get reverse on this
+    #@app_models.permalink #can't seem to get reverse on this
     @models.permalink
     def get_absolute_url(self):
         #return ('article_detail', 'articles.urls', (), {'slug': self.slug})
@@ -87,7 +89,7 @@ class ArticleAdmin(ItemEditor, ModelAdmin):
     }
     fieldsets = [
         (None, {
-            'fields': ['active', 'title', 'slug']
+            'fields': ['active', 'title', 'slug', 'author']
         }),
         # <-- insertion point, extensions appear here, see insertion_index above
     ]
@@ -103,3 +105,11 @@ class ArticleAdmin(ItemEditor, ModelAdmin):
             f[1]['classes'].append('collapse')
         else:   # assume called with "other" fields
             cls.fieldsets[1][1]['fields'].extend(f)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'author':
+            kwargs['initial'] = request.user.id
+            return db_field.formfield(**kwargs)
+        return super(ArticleAdmin, self).formfield_for_foreignkey(
+            db_field, request, **kwargs
+        )
