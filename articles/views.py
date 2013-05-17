@@ -18,7 +18,7 @@ class ArticleDetail(AppContentMixin, DetailView):
     model = Article
 
     def get_queryset(self):
-        return Article.objects.active()
+        return Article.objects.all()
 
 
 class ArticleList(AppContentMixin, ListView):
