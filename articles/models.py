@@ -3,7 +3,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import get_callable
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
+from django.utils.encoding import python_2_unicode_compatible
 
 try:
     from feincms.admin.item_editor import ItemEditor
@@ -12,7 +13,9 @@ except ImportError:
 
 from feincms.content.application import models as app_models
 from feincms.models import Base
+from feincms.module.mixins import ContentModelMixin
 from feincms.utils.managers import ActiveAwareContentManagerMixin
+from feincms.extensions import ExtensionModelAdmin
 from juicerecipes import settings
 
 
@@ -20,7 +23,8 @@ class ArticleManager(ActiveAwareContentManagerMixin, models.Manager):
     active_filters = {'simple-active': Q(active=True)}
 
 
-class Article(Base):
+@python_2_unicode_compatible
+class Article(ContentModelMixin, Base):
     active = models.BooleanField(_('active'), default=True)
 
     title = models.CharField(_('title'), max_length=255)
@@ -54,16 +58,11 @@ class Article(Base):
             delattr(cls, f_name)
 
     @classmethod
-    def register_extension(cls, register_fn):
-        """Extended from FeinCMS base to add the Admin class."""
-        register_fn(cls, ArticleAdmin)
-
-    @classmethod
     def get_urls(cls):
         return cls.get_urlpatterns()
 
-    def __unicode__(self):
-        return u"%s" % (self.title)
+    def __str__(self):
+        return self.title
 
     #@app_models.permalink #can't seem to get reverse on this
     @models.permalink
@@ -79,8 +78,8 @@ class Article(Base):
 ModelAdmin = get_callable(getattr(settings, 'ARTICLE_MODELADMIN_CLASS', 'django.contrib.admin.ModelAdmin'))
 
 
-class ArticleAdmin(ItemEditor, ModelAdmin):
-    list_display = ['__unicode__', 'active',]
+class ArticleAdmin(ItemEditor, ExtensionModelAdmin):
+    list_display = ['title', 'active',]
     list_filter = []
     search_fields = ['title', 'slug']
     filter_horizontal = []
@@ -94,22 +93,5 @@ class ArticleAdmin(ItemEditor, ModelAdmin):
         # <-- insertion point, extensions appear here, see insertion_index above
     ]
 
-    # TODO: add_extension_options is copied from feincms.module.page.modeladmins.PageAdmin
-    # When FeinCMS 1.7 is released it should be provided by extending feincms.extensions.ExtensionModelAdmin
-    fieldset_insertion_index = 1
-    @classmethod
-    def add_extension_options(cls, *f):
-        if isinstance(f[-1], dict):     # called with a fieldset
-            cls.fieldsets.insert(cls.fieldset_insertion_index, f)
-            f[1]['classes'] = list(f[1].get('classes', []))
-            f[1]['classes'].append('collapse')
-        else:   # assume called with "other" fields
-            cls.fieldsets[1][1]['fields'].extend(f)
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'author':
-            kwargs['initial'] = request.user.id
-            return db_field.formfield(**kwargs)
-        return super(ArticleAdmin, self).formfield_for_foreignkey(
-            db_field, request, **kwargs
-        )
+    fieldset_insertion_index = 1

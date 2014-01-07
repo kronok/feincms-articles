@@ -1,5 +1,5 @@
 from articles.views import ArticleList, ArticleDetail
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 #urlpatterns = Article.get_urls()
 urlpatterns = patterns('',
             url(r'^$', ArticleList.as_view(), name='article_index'),

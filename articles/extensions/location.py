@@ -1,6 +1,7 @@
 import warnings
-from django.contrib.gis.db import models
+
 from django.contrib.gis import admin
+from django.contrib.gis.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -17,8 +18,7 @@ def register(cls, admin_cls):
             warnings.warn("The admin class articles ArticleAdmin class is not a sub class of django.contrib.gis.admin.OSMGeoAdmin. "
                           "Consider setting ARTICLE_MODELADMIN_CLASS = 'django.contrib.gis.admin.OSMGeoAdmin'")
 
-        if admin_cls.fieldsets:
-            admin_cls.fieldsets.append((_('Location'), {
-                    'fields': ['location'],
-                    'classes': ('collapse',),
-                }))
+        admin_cls.add_extension_options(_('Location'), {
+            'fields': ('location',),
+            'classes': ('collapse',),
+        })
