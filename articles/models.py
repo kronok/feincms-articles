@@ -79,6 +79,7 @@ ModelAdmin = get_callable(getattr(settings, 'ARTICLE_MODELADMIN_CLASS', 'django.
 
 
 class ArticleAdmin(ItemEditor, ExtensionModelAdmin):
+    raw_id_fields = ['author']
     list_display = ['title', 'active',]
     list_filter = []
     search_fields = ['title', 'slug']
