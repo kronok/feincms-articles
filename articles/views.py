@@ -20,6 +20,11 @@ class ArticleDetail(AppContentMixin, DetailView):
     def get_queryset(self):
         return Article.objects.all()
 
+    def get_context_data(self, **kwargs):
+        context = super(ArticleDetail, self).get_context_data(**kwargs)
+        context['object_list'] = Article.objects.active().order_by('-creation_date')
+        return context
+
 
 class ArticleList(AppContentMixin, ListView):
     model = Article
