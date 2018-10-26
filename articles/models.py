@@ -1,10 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
-from django.core.urlresolvers import get_callable
-from django.conf.urls import patterns, url
-from django.utils.encoding import python_2_unicode_compatible
 
 try:
     from feincms.admin.item_editor import ItemEditor
@@ -23,13 +21,12 @@ class ArticleManager(ActiveAwareContentManagerMixin, models.Manager):
     active_filters = {'simple-active': Q(active=True)}
 
 
-@python_2_unicode_compatible
 class Article(ContentModelMixin, Base):
     active = models.BooleanField(_('active'), default=True)
 
     title = models.CharField(_('title'), max_length=255)
     slug = models.SlugField(_('slug'), max_length=255, help_text=_('This will be automatically generated from the name'), unique=True, editable=True)
-    author = models.ForeignKey(settings.AUTH_USER_MODEL)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['title']
@@ -39,13 +36,13 @@ class Article(ContentModelMixin, Base):
 
     objects = ArticleManager()
 
-    @classmethod
-    def get_urlpatterns(cls):
-        import views
-        return patterns('',
-            url(r'^$', views.ArticleList.as_view(), name='article_index'),
-            url(r'^(?P<slug>[a-z0-9_-]+)/$', views.ArticleDetail.as_view(), name='article_detail'),
-        )
+    # @classmethod
+    # def get_urlpatterns(cls):
+    #     import views
+    #     return patterns('',
+    #         url(r'^$', views.ArticleList.as_view(), name='article_index'),
+    #         url(r'^(?P<slug>[a-z0-9_-]+)/$', views.ArticleDetail.as_view(), name='article_detail'),
+    #     )
 
     @classmethod
     def remove_field(cls, f_name):
@@ -57,25 +54,24 @@ class Article(ContentModelMixin, Base):
         if hasattr(cls, f_name):
             delattr(cls, f_name)
 
-    @classmethod
-    def get_urls(cls):
-        return cls.get_urlpatterns()
+    # @classmethod
+    # def get_urls(cls):
+    #     return cls.get_urlpatterns()
 
     def __str__(self):
         return self.title
 
     #@app_models.permalink #can't seem to get reverse on this
-    @models.permalink
     def get_absolute_url(self):
         #return ('article_detail', 'articles.urls', (), {'slug': self.slug})
-        return ('article_detail', (), {'slug': self.slug})
+        return reverse('article_detail', kwargs={'slug': self.slug})
 
     @property
     def is_active(self):
-        return Article.objects.active().filter(pk=self.pk).count() > 0
+        return Article.objects.filter(pk=self.pk, active=True).exists()
 
 
-ModelAdmin = get_callable(getattr(settings, 'ARTICLE_MODELADMIN_CLASS', 'django.contrib.admin.ModelAdmin'))
+# ModelAdmin = get_callable(getattr(settings, 'ARTICLE_MODELADMIN_CLASS', 'django.contrib.admin.ModelAdmin'))
 
 
 class ArticleAdmin(ItemEditor, ExtensionModelAdmin):

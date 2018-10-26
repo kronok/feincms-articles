@@ -18,7 +18,7 @@ class CategoryManager(models.Manager):
 
     def active_query(self, user=None):
 
-        if user is not None and user.is_authenticated():
+        if user is not None and user.is_authenticated:
             query = Q(access_groups__isnull=True) | Q(access_groups__in=user.groups.all())
         else:
             query = Q(access_groups__isnull=True)
